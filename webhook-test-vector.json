@@ -1,0 +1,8 @@
+{
+  "secret": "whsec_bmFmcnUtc2RrLXRlc3Qtc2VjcmV0LTMyLWJ5dGVzISE=",
+  "id": "msg_2KWPBgLlAfxdpx2AI54pPJ85f4W",
+  "timestamp": "1767225600",
+  "now_seconds": 1767225600,
+  "payload": "{\"type\":\"email.delivered\",\"data\":{\"email_id\":\"em_123\"}}",
+  "signature": "v1,IR0V8GoLqxeRmUovKQynVfhF0WcRu5CnCzS5zSz14TU="
+}
