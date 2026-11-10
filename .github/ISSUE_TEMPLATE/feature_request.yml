@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest an improvement, an API ergonomics change or a new language.
+labels: [enhancement]
+body:
+  - type: dropdown
+    id: sdk
+    attributes:
+      label: SDK
+      multiple: true
+      options: [All, TypeScript / JavaScript, Python, Go, PHP, Ruby, Java, .NET, Rust, Swift, New language]
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: An example of the code you would like to write helps a lot.

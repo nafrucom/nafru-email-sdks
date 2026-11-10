@@ -28,20 +28,21 @@ already use Resend, you can switch by changing the base URL and API key; these S
   local development
 - [Versioning and deprecation](#versioning-and-deprecation)
 - [FAQ](#faq)
+- [Security](#security) · [Support](#support)
 
 ## Installation
 
-| Language | Package | Install | Docs |
-| --- | --- | --- | --- |
-| TypeScript / JavaScript | `@nafrucom/email` | `npm install @nafrucom/email` | [npm](https://www.npmjs.com/package/@nafrucom/email) |
-| Python ≥ 3.9 | `nafru-email` | `pip install nafru-email` | [python/](python/README.md) |
-| Go ≥ 1.21 | `github.com/nafrucom/nafru-email-sdks/go` | `go get github.com/nafrucom/nafru-email-sdks/go` | [go/](go/README.md) |
-| PHP ≥ 8.1 | `nafrucom/email` | `composer require nafrucom/email` | [php/](php/README.md) |
-| Ruby ≥ 3.1 | `nafru-email` | `gem install nafru-email` | [ruby/](ruby/README.md) |
-| Java ≥ 17 | `com.nafru:nafru-email` | `implementation("com.nafru:nafru-email:0.1.0")` | [java/](java/README.md) |
-| .NET 8+ (C#, F#) | `Nafru.Email` | `dotnet add package Nafru.Email` | [dotnet/](dotnet/README.md) |
-| Rust | `nafru-email` | `cargo add nafru-email` | [rust/](rust/README.md) |
-| Swift (iOS 15+, macOS 12+) | `NafruEmail` | `.package(url: "https://github.com/nafrucom/nafru-email-sdks", from: "0.1.0")` | [swift/](swift/README.md) |
+| Language                   | Package                                   | Install                                                                        | Docs                                                 |
+| -------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| TypeScript / JavaScript    | `@nafrucom/email`                         | `npm install @nafrucom/email`                                                  | [npm](https://www.npmjs.com/package/@nafrucom/email) |
+| Python ≥ 3.9               | `nafru-email`                             | `pip install nafru-email`                                                      | [python/](python/README.md)                          |
+| Go ≥ 1.21                  | `github.com/nafrucom/nafru-email-sdks/go` | `go get github.com/nafrucom/nafru-email-sdks/go`                               | [go/](go/README.md)                                  |
+| PHP ≥ 8.1                  | `nafrucom/email`                          | `composer require nafrucom/email`                                              | [php/](php/README.md)                                |
+| Ruby ≥ 3.1                 | `nafru-email`                             | `gem install nafru-email`                                                      | [ruby/](ruby/README.md)                              |
+| Java ≥ 17                  | `com.nafru:nafru-email`                   | `implementation("com.nafru:nafru-email:0.1.1")`                                | [java/](java/README.md)                              |
+| .NET 8+ (C#, F#)           | `Nafru.Email`                             | `dotnet add package Nafru.Email`                                               | [dotnet/](dotnet/README.md)                          |
+| Rust                       | `nafru-email`                             | `cargo add nafru-email`                                                        | [rust/](rust/README.md)                              |
+| Swift (iOS 15+, macOS 12+) | `NafruEmail`                              | `.package(url: "https://github.com/nafrucom/nafru-email-sdks", from: "0.1.1")` | [swift/](swift/README.md)                            |
 
 Every SDK has the same feature set and is released with the **same version number on the same day**.
 
@@ -54,9 +55,9 @@ Each example sends one email; `idempotencyKey` makes a retried request return th
 <summary><b>TypeScript / JavaScript</b> (Node ≥ 18, Bun, Deno, Cloudflare Workers)</summary>
 
 ```ts
-import { createNafru } from '@nafrucom/email'
+import { NafruEmail } from '@nafrucom/email'
 
-const nafru = createNafru({ apiKey: process.env.NAFRU_API_KEY! })
+const nafru = new NafruEmail('nafru_123')
 
 const { data, error } = await nafru.emails.send(
   { from: 'Acme <hello@example.com>', to: 'user@example.org', subject: 'Welcome', html: '<p>Hello!</p>' },
@@ -65,6 +66,7 @@ const { data, error } = await nafru.emails.send(
 if (error) console.error(error.statusCode, error.name, error.message)
 else console.log(data.id)
 ```
+
 </details>
 
 <details>
@@ -72,9 +74,9 @@ else console.log(data.id)
 
 ```python
 import os
-from nafru_email import Nafru, NafruError
+from nafru_email import NafruEmail, NafruError
 
-nafru = Nafru(api_key=os.environ["NAFRU_API_KEY"])
+nafru = NafruEmail("nafru_123")  # or NafruEmail(), which reads NAFRU_API_KEY
 
 try:
     email = nafru.emails.send(
@@ -85,37 +87,39 @@ try:
 except NafruError as error:
     print(error.status_code, error.name, error.message)
 ```
+
 </details>
 
 <details>
 <summary><b>Go</b></summary>
 
 ```go
-client, err := nafru.New(nafru.Options{APIKey: os.Getenv("NAFRU_API_KEY")})
+client, err := nafruemail.NewClient("nafru_123") // "" reads NAFRU_API_KEY
 if err != nil {
 	log.Fatal(err)
 }
-sent, err := client.Emails.Send(ctx, &nafru.SendEmailInput{
+sent, err := client.Emails.Send(ctx, &nafruemail.SendEmailInput{
 	From:    "Acme <hello@example.com>",
 	To:      []string{"user@example.org"},
 	Subject: "Welcome",
 	HTML:    "<p>Hello!</p>",
-}, nafru.SendEmailOptions{IdempotencyKey: "signup-1042"})
+}, nafruemail.SendEmailOptions{IdempotencyKey: "signup-1042"})
 if err != nil {
-	log.Fatal(err) // *nafru.Error carries StatusCode, Name, Message
+	log.Fatal(err) // *nafruemail.Error carries StatusCode, Name, Message
 }
 fmt.Println(sent.ID)
 ```
+
 </details>
 
 <details>
 <summary><b>PHP</b></summary>
 
 ```php
-use Nafru\Email\Nafru;
+use Nafru\Email\NafruEmail;
 use Nafru\Email\NafruException;
 
-$nafru = new Nafru(apiKey: getenv('NAFRU_API_KEY'));
+$nafru = new NafruEmail('nafru_123'); // or new NafruEmail(), which reads NAFRU_API_KEY
 
 try {
     $email = $nafru->emails->send(
@@ -127,6 +131,7 @@ try {
     error_log("{$e->statusCode} {$e->name} {$e->getMessage()}");
 }
 ```
+
 </details>
 
 <details>
@@ -135,7 +140,7 @@ try {
 ```ruby
 require "nafru_email"
 
-nafru = Nafru::Email::Client.new(api_key: ENV.fetch("NAFRU_API_KEY"))
+nafru = NafruEmail.new("nafru_123") # or NafruEmail.new, which reads NAFRU_API_KEY
 
 email = nafru.emails.send(
   { from: "Acme <hello@example.com>", to: "user@example.org", subject: "Welcome", html: "<p>Hello!</p>" },
@@ -143,13 +148,14 @@ email = nafru.emails.send(
 )
 puts email[:id]
 ```
+
 </details>
 
 <details>
 <summary><b>Java</b></summary>
 
 ```java
-Nafru nafru = Nafru.builder().apiKey(System.getenv("NAFRU_API_KEY")).build();
+NafruEmail nafru = new NafruEmail("nafru_123"); // or new NafruEmail(), which reads NAFRU_API_KEY
 
 var sent = nafru.emails().send(
         new SendEmailInput()
@@ -160,6 +166,7 @@ var sent = nafru.emails().send(
         "signup-1042"); // Idempotency-Key
 System.out.println(sent.id());
 ```
+
 </details>
 
 <details>
@@ -168,22 +175,23 @@ System.out.println(sent.id());
 ```csharp
 using Nafru.Email;
 
-var nafru = new NafruClient(new NafruOptions { ApiKey = Environment.GetEnvironmentVariable("NAFRU_API_KEY")! });
+var nafru = new NafruEmail("nafru_123"); // or new NafruEmail(), which reads NAFRU_API_KEY
 
 var sent = await nafru.Emails.SendAsync(
     new SendEmailInput { From = "Acme <hello@example.com>", To = ["user@example.org"], Subject = "Welcome", Html = "<p>Hello!</p>" },
     idempotencyKey: "signup-1042");
 Console.WriteLine(sent.Id);
 ```
+
 </details>
 
 <details>
 <summary><b>Rust</b></summary>
 
 ```rust
-use nafru_email::{Nafru, NafruOptions, SendEmailInput, SendEmailOptions};
+use nafru_email::{NafruEmail, SendEmailInput, SendEmailOptions};
 
-let nafru = Nafru::new(NafruOptions::new(std::env::var("NAFRU_API_KEY")?))?;
+let nafru = NafruEmail::new("nafru_123")?; // "" reads NAFRU_API_KEY
 
 let sent = nafru
     .emails
@@ -200,6 +208,7 @@ let sent = nafru
     .await?;
 println!("{}", sent.id);
 ```
+
 </details>
 
 <details>
@@ -208,7 +217,7 @@ println!("{}", sent.id);
 ```swift
 import NafruEmail
 
-let nafru = try Nafru(apiKey: ProcessInfo.processInfo.environment["NAFRU_API_KEY"]!)
+let nafru = try NafruEmail("nafru_123") // or NafruEmail(), which reads NAFRU_API_KEY
 
 let sent = try await nafru.emails.send(
     SendEmailInput(from: "Acme <hello@example.com>", to: ["user@example.org"], subject: "Welcome", html: "<p>Hello!</p>"),
@@ -216,22 +225,23 @@ let sent = try await nafru.emails.send(
 )
 print(sent.id)
 ```
+
 </details>
 
 ## Features
 
-| Area | What you can do |
-| --- | --- |
-| **Emails** | Send single or batch (up to 100) emails, HTML / text / template bodies, attachments, tags, `cc` / `bcc` / `reply_to`, scheduled sending (`scheduled_at`, ISO 8601 or natural language like `in 1 hour`), reschedule, cancel, get, list |
-| **Domains** | Add sending domains, read DNS records (SPF, DKIM, DMARC), trigger verification, update tracking settings |
-| **Contacts** | Create, update, delete and list contacts (by id or email address), custom contact properties, segment membership, topic subscriptions (opt-in / opt-out) |
-| **Segments & topics** | Static and dynamic audiences, subscription topics for preference centers |
-| **Broadcasts** | Draft, schedule, send and cancel campaigns; recurring broadcasts (weekly, monthly, every N days) with per-send `data` from a URL or webhook |
-| **Templates** | Create, update, publish and duplicate templates; per-locale translations; workspace brand (logo, colors, fonts, footer) |
-| **Events** | Send custom events (single or batch) to trigger automations |
-| **Webhooks** | Manage endpoints and verify signatures (Svix / Standard Webhooks compatible) |
-| **API keys** | Create, list and revoke keys with scoped access |
-| **Connect with Nafru** | OAuth 2.0 + PKCE flow so your SaaS can send on behalf of your customers' Nafru accounts, with automatic token refresh |
+| Area                   | What you can do                                                                                                                                                                                                                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Emails**             | Send single or batch (up to 100) emails, HTML / text / template bodies, attachments, tags, `cc` / `bcc` / `reply_to`, scheduled sending (`scheduled_at`, ISO 8601 or natural language like `in 1 hour`), reschedule, cancel, get, list |
+| **Domains**            | Add sending domains, read DNS records (SPF, DKIM, DMARC), trigger verification, update tracking settings                                                                                                                               |
+| **Contacts**           | Create, update, delete and list contacts (by id or email address), custom contact properties, segment membership, topic subscriptions (opt-in / opt-out)                                                                               |
+| **Segments & topics**  | Static and dynamic audiences, subscription topics for preference centers                                                                                                                                                               |
+| **Broadcasts**         | Draft, schedule, send and cancel campaigns; recurring broadcasts (weekly, monthly, every N days) with per-send `data` from a URL or webhook                                                                                            |
+| **Templates**          | Create, update, publish and duplicate templates; per-locale translations; workspace brand (logo, colors, fonts, footer)                                                                                                                |
+| **Events**             | Send custom events (single or batch) to trigger automations                                                                                                                                                                            |
+| **Webhooks**           | Manage endpoints and verify signatures (Svix / Standard Webhooks compatible)                                                                                                                                                           |
+| **API keys**           | Create, list and revoke keys with scoped access                                                                                                                                                                                        |
+| **Connect with Nafru** | OAuth 2.0 + PKCE flow so your SaaS can send on behalf of your customers' Nafru accounts, with automatic token refresh                                                                                                                  |
 
 ## Concepts
 
@@ -245,13 +255,13 @@ only for self-hosted or local development (`http://localhost:48787/api`).
 Every SDK exposes the same error fields, idiomatically (a `{ data, error }` result in TypeScript; an exception or error
 value elsewhere):
 
-| Field | Meaning |
-| --- | --- |
-| `statusCode` | HTTP status; empty for network failures and timeouts |
-| `name` | Machine-readable name: `validation_error`, `not_found`, `rate_limit_exceeded`, `unauthorized`, `conflict`, `timeout_error`, `application_error`, … |
-| `message` | Human-readable message |
-| `errors` | Per-field validation errors (`field`, `message`) |
-| `retryAfter` | Seconds to wait, from the `Retry-After` header on `429` |
+| Field        | Meaning                                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `statusCode` | HTTP status; empty for network failures and timeouts                                                                                               |
+| `name`       | Machine-readable name: `validation_error`, `not_found`, `rate_limit_exceeded`, `unauthorized`, `conflict`, `timeout_error`, `application_error`, … |
+| `message`    | Human-readable message                                                                                                                             |
+| `errors`     | Per-field validation errors (`field`, `message`)                                                                                                   |
+| `retryAfter` | Seconds to wait, from the `Retry-After` header on `429`                                                                                            |
 
 ### Retries, timeouts and idempotency
 
@@ -305,6 +315,24 @@ your server. Mobile and desktop apps should go through your backend or use Conne
 
 **Where is the source?** This repository is published automatically from the Nafru Email monorepo on every release.
 Please open issues here.
+
+## Security
+
+Report vulnerabilities privately through [GitHub](https://github.com/nafrucom/nafru-email-sdks/security/advisories/new) or
+**security@nafru.com**. See [SECURITY.md](SECURITY.md) for our disclosure policy, response times and how the SDKs protect
+your keys: HTTPS only, redirects refused, certificate verification always on, secrets redacted from logs, 10 MB response
+cap, constant-time webhook verification.
+
+## Support
+
+| You want to…                                          | Go to                                                                           |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Ask a question                                        | [GitHub Discussions](https://github.com/nafrucom/nafru-email-sdks/discussions)  |
+| Report a bug or request a feature                     | [GitHub Issues](https://github.com/nafrucom/nafru-email-sdks/issues/new/choose) |
+| Get help with your account, billing or deliverability | **destek@nafru.com**                                                            |
+| Report a vulnerability                                | [SECURITY.md](SECURITY.md) — privately, never in a public issue                 |
+
+Every SDK README has a **Troubleshooting** section. See [SUPPORT.md](SUPPORT.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

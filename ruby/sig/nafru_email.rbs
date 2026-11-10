@@ -1,0 +1,370 @@
+# Nafru Email SDK tip imzaları. Girdi/yanıt alanları API'deki gibi snake_case; yanıtlar sembol anahtarlı Hash'tir.
+module Nafru
+  module Email
+    VERSION: String
+    DEFAULT_BASE_URL: String
+    MAX_RESPONSE_BYTES: Integer
+    SDK_VERSION: String
+    SCOPES: Array[String]
+
+    # --- ortak
+    type list_response[T] = { object: String, data: Array[T], has_more: bool }
+    type list_query = { ?limit: Integer, ?after: String, ?before: String }
+    type deleted_response = { object: String, id: String, deleted: true }
+    type tag = { name: String, value: String }
+    type ref = { object: String, id: String }
+    type recipients = String | Array[String]
+
+    # --- e-postalar
+    type attachment = { ?content: String, ?path: String, ?filename: String, ?content_type: String, ?content_id: String }
+    type send_email_input = {
+      ?from: String, to: recipients, ?cc: recipients, ?bcc: recipients, ?reply_to: recipients, ?subject: String,
+      ?headers: Hash[String, String], ?tags: Array[tag], ?scheduled_at: String,
+      ?html: String, ?text: String, ?attachments: Array[attachment],
+      ?template: { id: String, ?variables: Hash[String | Symbol, String | Integer | Float] }
+    }
+    type batch_email_item = {
+      from: String, to: recipients, ?cc: recipients, ?bcc: recipients, ?reply_to: recipients, subject: String,
+      ?headers: Hash[String, String], ?tags: Array[tag], ?scheduled_at: String, ?html: String, ?text: String
+    }
+    type email_list_item = {
+      id: String, to: Array[String], from: String, created_at: String, subject: String, bcc: Array[String]?,
+      cc: Array[String]?, reply_to: Array[String]?, last_event: String, scheduled_at: String?, message_id: String?
+    }
+    type email_event = { id: String, type: String, created_at: String, detail: Hash[Symbol, untyped] }
+    type email = {
+      object: "email", id: String, to: Array[String], from: String, created_at: String, subject: String,
+      bcc: Array[String]?, cc: Array[String]?, reply_to: Array[String]?, last_event: String, scheduled_at: String?,
+      message_id: String?, html: String?, text: String?, tags: Array[tag], events: Array[email_event]
+    }
+    type list_emails_query = { ?limit: Integer, ?after: String, ?before: String, ?status: String }
+
+    # --- alan adları
+    type domain_record = { record: String, name: String, type: String, value: String, ttl: String, status: String, ?priority: Integer }
+    type domain = {
+      id: String, name: String, status: String, created_at: String, region: String,
+      capabilities: { sending: String, receiving: String }, open_tracking: bool, click_tracking: bool, tls: String,
+      tracking_subdomain: String?
+    }
+    type domain_detail = {
+      object: "domain", id: String, name: String, status: String, created_at: String, region: String,
+      capabilities: { sending: String, receiving: String }, open_tracking: bool, click_tracking: bool, tls: String,
+      tracking_subdomain: String?, records: Array[domain_record]
+    }
+    type create_domain_input = { name: String, ?region: String, ?open_tracking: bool, ?click_tracking: bool, ?tls: String, ?tracking_subdomain: String }
+    type update_domain_input = { ?open_tracking: bool, ?click_tracking: bool, ?tls: String, ?tracking_subdomain: String? }
+
+    # --- kişiler
+    type property_value = String | Integer | Float | nil
+    type contact = { id: String, email: String, first_name: String?, last_name: String?, unsubscribed: bool, locale: String?, created_at: String }
+    type contact_detail = {
+      object: "contact", id: String, email: String, first_name: String?, last_name: String?, unsubscribed: bool,
+      locale: String?, created_at: String, properties: Hash[Symbol, { type: String, value: String | Integer | Float }]
+    }
+    type topic_subscription = "opt_in" | "opt_out"
+    type create_contact_input = {
+      email: String, ?first_name: String?, ?last_name: String?, ?unsubscribed: bool, ?locale: String?,
+      ?properties: Hash[String | Symbol, property_value], ?segments: Array[{ id: String }],
+      ?topics: Array[{ id: String, subscription: topic_subscription }]
+    }
+    type update_contact_input = { ?first_name: String?, ?last_name: String?, ?unsubscribed: bool, ?locale: String?, ?properties: Hash[String | Symbol, property_value] }
+    type list_contacts_query = { ?limit: Integer, ?after: String, ?before: String, ?search: String }
+    type deleted_contact = { object: "contact", contact: String, deleted: true }
+    type contact_property = { id: String, key: String, type: String, fallback_value: property_value, created_at: String }
+    type create_contact_property_input = { key: String, type: "string" | "number", ?fallback_value: property_value }
+    type update_contact_property_input = { ?fallback_value: property_value }
+    type contact_topic = { id: String, name: String, description: String?, subscription: topic_subscription, status: String }
+    type update_contact_topics_input = { topics: Array[{ id: String, subscription: topic_subscription }] }
+
+    # --- segmentler, konular
+    type segment = { id: String, name: String, created_at: String, type: String, filter: Hash[Symbol, untyped]? }
+    type create_segment_input = { name: String, ?filter: Hash[String | Symbol, untyped] }
+    type segment_ref = { object: "segment", id: String, name: String }
+    type topic = {
+      id: String, name: String, description: String?, default_subscription: topic_subscription, visibility: String,
+      double_opt_in: bool, created_at: String
+    }
+    type create_topic_input = { name: String, default_subscription: topic_subscription, ?description: String?, ?visibility: String, ?double_opt_in: bool }
+    type update_topic_input = { ?name: String, ?description: String?, ?visibility: String, ?double_opt_in: bool }
+
+    # --- kampanyalar
+    # Tekrar kuralı; saat (`HH:MM`) çalışma alanının saat diliminde. weekly.days: 0 = pazar … 6 = cumartesi.
+    # Yanıtta bilinmeyen `type` gelebilir: Hash olarak olduğu gibi döner.
+    type broadcast_recurrence = { type: "weekly", days: Array[Integer], time: String }
+                              | { type: "monthly", day: Integer, time: String }
+                              | { type: "interval", every_days: Integer, time: String }
+    type broadcast_data_source_input = { type: "manual" }
+                                     | { type: "url", url: String, ?header_name: String?, ?header_value: String? }
+                                     | { type: "webhook", ?regenerate_secret: bool }
+    type broadcast_data_source = { type: "manual" }
+                               | { type: "url", url: String, header_name: String?, has_header_value: bool }
+                               | { type: "webhook", trigger_url: String, secret: String }
+    type broadcast_list_item = {
+      id: String, name: String, segment_id: String, audience_id: String, subject: String, status: String,
+      created_at: String, scheduled_at: String?, sent_at: String?, recurrence: broadcast_recurrence?,
+      trigger_state: ("active" | "paused")?, next_run_at: String?, parent_id: String?
+    }
+    type broadcast = {
+      object: "broadcast", id: String, name: String, segment_id: String, audience_id: String, subject: String, status: String,
+      created_at: String, scheduled_at: String?, sent_at: String?, recurrence: broadcast_recurrence?,
+      trigger_state: ("active" | "paused")?, next_run_at: String?, parent_id: String?,
+      from: String, reply_to: Array[String]?, preview_text: String?, topic_id: String?, template_id: String?, html: String?,
+      text: String?, open_tracking: bool, click_tracking: bool, finished_at: String?, failure_reason: String?,
+      data: Hash[Symbol, untyped]?, data_source: broadcast_data_source?
+    }
+    type create_broadcast_input = {
+      ?name: String, segment_id: String, ?topic_id: String, from: String, ?subject: String, ?reply_to: recipients,
+      ?html: String, ?text: String, ?template_id: String, ?preview_text: String?, ?send: bool, ?scheduled_at: String,
+      ?open_tracking: bool, ?click_tracking: bool, ?data: Hash[String | Symbol, untyped]?,
+      ?data_source: broadcast_data_source_input?, ?recurrence: broadcast_recurrence?
+    }
+    # `nil` alan açıkça temizler (JSON null); verilmeyen alana dokunulmaz.
+    type update_broadcast_input = {
+      ?name: String, ?segment_id: String, ?topic_id: String?, ?from: String, ?subject: String, ?reply_to: Array[String],
+      ?html: String, ?text: String, ?preview_text: String?, ?open_tracking: bool, ?click_tracking: bool,
+      ?data: Hash[String | Symbol, untyped]?, ?data_source: broadcast_data_source_input?, ?recurrence: broadcast_recurrence?
+    }
+    type send_broadcast_input = { ?scheduled_at: String, ?data: Hash[String | Symbol, untyped] }
+
+    # --- şablonlar ve marka
+    type template_brand_override = {
+      ?accent_color: String, ?text_color: String, ?backdrop_color: String, ?canvas_color: String, ?font_family: String,
+      ?link_color: String, ?content_width: Integer, ?show_header: bool, ?show_footer: bool
+    }
+    type template_brand = { mode: "inherit" | "custom" | "none", ?override: template_brand_override? }
+    type template_list_item = {
+      id: String, name: String, alias: String?, type: String, status: String, subject: String?, current_version: Integer?,
+      has_unpublished_changes: bool, published_at: String?, created_at: String, updated_at: String
+    }
+    type template_variable = { key: String, type: String, fallback_value: String? }
+    type template = Hash[Symbol, untyped] # template_list_item + object, preview_text, html, text, design, revision, variables: Array[template_variable], brand
+    type create_template_input = { name: String, ?alias: String, ?subject: String?, ?preview_text: String?, html: String, ?text: String?, ?brand: template_brand }
+    type update_template_input = {
+      ?revision: Integer, ?name: String, ?alias: String?, ?subject: String?, ?preview_text: String?, ?html: String,
+      ?text: String?, ?brand: template_brand
+    }
+    type template_saved = { object: "template", id: String, revision: Integer }
+    type template_published = { object: "template", id: String, version: Integer, version_id: String, revision: Integer }
+    type put_template_translation_input = { ?subject: String?, ?preview_text: String?, html: String, ?text: String? }
+    type template_translation = { locale: String, subject: String?, preview_text: String?, design_revision: Integer, updated_at: String }
+    type brand_social_link = { network: String, url: String }
+    type brand = Hash[Symbol, untyped] # object, configured, logo_*, accent_color, text_color, …, social_links: Array[brand_social_link]
+    type update_brand_input = Hash[Symbol | String, untyped] # tüm alanlar isteğe bağlı; gönderilmeyen "ayarlanmadı" olur
+
+    # --- webhook, anahtar, olay
+    type webhook = { id: String, endpoint: String, created_at: String, status: String, events: Array[String] }
+    type created_webhook = { object: "webhook", id: String, signing_secret: String }
+    type create_webhook_input = { endpoint: String, events: Array[String] }
+    type update_webhook_input = { ?endpoint: String, ?events: Array[String], ?status: "enabled" | "disabled" }
+    type api_key = { id: String, name: String, created_at: String, last_used_at: String?, permission: String, domain_id: String?, token_prefix: String }
+    type create_api_key_input = { name: String, ?permission: "full_access" | "sending_access", ?domain_id: String }
+    type event_properties = Hash[String | Symbol, String | Integer | Float | bool | nil]
+    type send_event_input = { name: String, contact: { email: String } | { id: String }, ?properties: event_properties, ?occurred_at: String, ?unsubscribed: bool }
+    type event_item = {
+      id: String, name: String, contact_id: String, email: String, properties: Hash[Symbol, untyped], source: String,
+      occurred_at: String, created_at: String
+    }
+    type list_events_query = { ?limit: Integer, ?after: String, ?before: String, ?name: String, ?contact_id: String, ?email: String }
+
+    # --- uygulama ("Nafru ile bağlan")
+    type connection_status = {
+      object: "connection", id: String, ready: bool, missing: Array[String], hints: Array[String], scopes: Array[String],
+      billing_mode: "customer_pays" | "app_pays", setup_url: String, workspace: { name: String }
+    }
+    type connection_senders = { domains: Array[{ id: String, name: String }], default_from: String? }
+    type connection_template = { key: String, name: String, source: "workspace" | "pack", customized_from_pack: bool }
+
+    # `exchange` sonucu; `inspect`/`to_s` yenileme belirtecini göstermez.
+    class ConnectionGrant < Struct[untyped]
+      attr_accessor connection_id: String
+      attr_accessor refresh_token: String
+      attr_accessor scopes: Array[String]
+      def initialize: (connection_id: String, refresh_token: String, scopes: Array[String]) -> void
+    end
+
+    class Error < StandardError
+      attr_reader status_code: Integer?
+      attr_reader name: String
+      attr_reader errors: Array[{ field: String, message: String, ?i18nTranslationKey: String }]?
+      attr_reader retry_after: Numeric?
+      def initialize: (String message, name: String, ?status_code: Integer?, ?errors: Array[Hash[Symbol, String]]?, ?retry_after: Numeric?) -> void
+      def to_h: () -> Hash[Symbol, untyped]
+    end
+
+    class Response < Struct[untyped]
+      attr_accessor status: Integer
+      attr_accessor headers: Hash[String, String]
+      attr_accessor body: String?
+      attr_accessor reason: String?
+    end
+
+    interface _Transport
+      def call: (method: String, url: String, headers: Hash[String, String], body: String?, timeout: Numeric) -> Response
+    end
+
+    def self.paginate: [T] (^(Hash[Symbol, untyped]) -> list_response[T], ?Hash[Symbol, untyped]) -> Enumerator[T, void]
+    def self.create_pkce: () -> { verifier: String, challenge: String }
+
+    module Webhook
+      MAX_SIGNATURES: Integer
+      def self.verify: (payload: String, headers: { ?id: String?, ?timestamp: String?, ?signature: String? }?, secret: String,
+                        ?tolerance_seconds: Integer, ?now: Time | Numeric) -> bool
+    end
+
+    class Connect
+      def authorize_url: (redirect_uri: String, state: String, scopes: Array[String], ?login_hint: String?) -> { url: String, code_verifier: String }
+      def exchange: (code: String, code_verifier: String, redirect_uri: String) -> ConnectionGrant
+      def revoke: (refresh_token: String) -> nil
+    end
+
+    class Connection
+      attr_reader id: String
+      def status: () -> connection_status
+      def senders: () -> untyped # .list -> connection_senders
+      def templates: () -> untyped # .list -> list_response[connection_template]
+      def emails: () -> untyped # .send / .get / .list (Resources::Emails ile aynı imza)
+    end
+
+    module Resources
+      class Emails
+        def send: (send_email_input input, ?idempotency_key: String?) -> { id: String }
+        def batch: (Array[batch_email_item] input, ?idempotency_key: String?) -> { data: Array[{ id: String }] }
+        def get: (String id) -> email
+        def list: (?list_emails_query query) -> list_response[email_list_item]
+        def update: (String id, { scheduled_at: String } input) -> ref
+        def cancel: (String id) -> ref
+      end
+
+      class Domains
+        def create: (create_domain_input input) -> domain_detail
+        def get: (String id) -> domain_detail
+        def list: (?list_query query) -> list_response[domain]
+        def update: (String id, update_domain_input input) -> ref
+        def remove: (String id) -> deleted_response
+        def verify: (String id) -> ref
+      end
+
+      class Contacts
+        attr_reader segments: ContactSegments
+        attr_reader topics: ContactTopics
+        def create: (create_contact_input input) -> ref
+        def get: (String id_or_email) -> contact_detail
+        def list: (?list_contacts_query query) -> list_response[contact]
+        def update: (String id_or_email, update_contact_input input) -> ref
+        def remove: (String id_or_email) -> deleted_contact
+      end
+
+      class ContactSegments
+        def list: (String id_or_email, ?list_query query) -> list_response[segment]
+        def add: (String id_or_email, String segment_id) -> { id: String }
+        def remove: (String id_or_email, String segment_id) -> { id: String, deleted: true }
+      end
+
+      class ContactTopics
+        def list: (String id_or_email, ?list_query query) -> list_response[contact_topic]
+        def update: (String id_or_email, update_contact_topics_input input) -> ref
+      end
+
+      class ContactProperties
+        def create: (create_contact_property_input input) -> ref
+        def get: (String id) -> Hash[Symbol, untyped]
+        def list: (?list_query query) -> list_response[contact_property]
+        def update: (String id, update_contact_property_input input) -> ref
+        def remove: (String id) -> deleted_response
+      end
+
+      class Segments
+        def create: (create_segment_input input) -> segment_ref
+        def get: (String id) -> Hash[Symbol, untyped]
+        def list: (?list_query query) -> list_response[segment]
+        def remove: (String id) -> deleted_response
+        def contacts: (String id, ?{ ?limit: Integer, ?after: String } query) -> list_response[contact]
+      end
+
+      class Topics
+        def create: (create_topic_input input) -> ref
+        def get: (String id) -> Hash[Symbol, untyped]
+        def list: (?list_query query) -> list_response[topic]
+        def update: (String id, update_topic_input input) -> ref
+        def remove: (String id) -> deleted_response
+      end
+
+      class Broadcasts
+        def create: (create_broadcast_input input) -> ref
+        def get: (String id) -> broadcast
+        def list: (?list_query query) -> list_response[broadcast_list_item]
+        def update: (String id, update_broadcast_input input) -> ref
+        def remove: (String id) -> deleted_response
+        def send: (String id, ?send_broadcast_input input) -> ref
+        def cancel: (String id) -> ref
+      end
+
+      class Templates
+        def create: (create_template_input input) -> template_saved
+        def get: (String id_or_alias) -> template
+        def list: (?list_query query) -> list_response[template_list_item]
+        def update: (String id_or_alias, update_template_input input) -> template_saved
+        def remove: (String id_or_alias) -> deleted_response
+        def publish: (String id_or_alias) -> template_published
+        def duplicate: (String id_or_alias) -> ref
+        def put_translation: (String id_or_alias, String locale, put_template_translation_input input) -> template_translation
+        def remove_translation: (String id_or_alias, String locale) -> { object: String, locale: String, deleted: true }
+      end
+
+      class Brand
+        def get: () -> brand
+        def update: (update_brand_input input) -> brand
+      end
+
+      class Webhooks
+        def create: (create_webhook_input input) -> created_webhook
+        def get: (String id) -> Hash[Symbol, untyped]
+        def list: (?list_query query) -> list_response[webhook]
+        def update: (String id, update_webhook_input input) -> ref
+        def remove: (String id) -> deleted_response
+      end
+
+      class ApiKeys
+        def create: (create_api_key_input input) -> { id: String, token: String }
+        def list: (?list_query query) -> list_response[api_key]
+        def remove: (String id) -> deleted_response
+      end
+
+      class Events
+        def send: (send_event_input input, ?idempotency_key: String?) -> { id: String }
+        def batch: (Array[send_event_input] input, ?idempotency_key: String?) -> { data: Array[{ id: String }] }
+        def list: (?list_events_query query) -> list_response[event_item]
+      end
+    end
+  end
+end
+
+# API anahtarıyla istemci (Resend tarzı). `api_key` boşsa `NAFRU_API_KEY` okunur.
+class NafruEmail
+  def initialize: (?String? api_key, ?base_url: String?, ?transport: Nafru::Email::_Transport?, ?max_retries: Integer,
+                   ?timeout: Numeric, ?dev_outbox: String | false | nil) -> void
+  attr_reader emails: Nafru::Email::Resources::Emails
+  attr_reader domains: Nafru::Email::Resources::Domains
+  attr_reader contacts: Nafru::Email::Resources::Contacts
+  attr_reader contact_properties: Nafru::Email::Resources::ContactProperties
+  attr_reader segments: Nafru::Email::Resources::Segments
+  attr_reader topics: Nafru::Email::Resources::Topics
+  attr_reader broadcasts: Nafru::Email::Resources::Broadcasts
+  attr_reader templates: Nafru::Email::Resources::Templates
+  attr_reader brand: Nafru::Email::Resources::Brand
+  attr_reader webhooks: Nafru::Email::Resources::Webhooks
+  attr_reader api_keys: Nafru::Email::Resources::ApiKeys
+  attr_reader events: Nafru::Email::Resources::Events
+end
+
+# "Nafru ile bağlan" (OAuth + PKCE) fabrikası.
+class NafruConnect
+  def initialize: (client_id: String, client_secret: String, ?base_url: String?, ?web_url: String?,
+                   ?transport: Nafru::Email::_Transport?, ?max_retries: Integer, ?timeout: Numeric,
+                   ?dev_outbox: String | false | nil) -> void
+  def authorize_url: (redirect_uri: String, state: String, scopes: Array[String], ?login_hint: String?) -> { url: String, code_verifier: String }
+  def exchange: (code: String, code_verifier: String, redirect_uri: String) -> Nafru::Email::ConnectionGrant
+  def revoke: (refresh_token: String) -> nil
+  def connection: (String connection_id, refresh_token: String, ?on_token_refresh: ^({ refresh_token: String }) -> void)
+                ?{ ({ refresh_token: String }) -> void } -> Nafru::Email::Connection
+end

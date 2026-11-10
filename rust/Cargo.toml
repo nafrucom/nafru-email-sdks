@@ -1,0 +1,32 @@
+[package]
+name = "nafru-email"
+# Sürümün tek kaynağı: SDK_VERSION ve User-Agent bunu derleme anında okur (env!("CARGO_PKG_VERSION")).
+version = "0.1.1"
+edition = "2024"
+rust-version = "1.85"
+description = "Official Nafru Email Rust SDK: send transactional email from Rust with a Resend-compatible email API, webhook verification and Connect with Nafru OAuth"
+license = "MIT"
+homepage = "https://github.com/nafrucom/nafru-email"
+repository = "https://github.com/nafrucom/nafru-email-sdks"
+documentation = "https://docs.rs/nafru-email"
+readme = "README.md"
+keywords = ["email", "email-api", "transactional-email", "resend", "webhooks"]
+categories = ["api-bindings", "email", "web-programming::http-client"]
+include = ["src/**/*.rs", "Cargo.toml", "README.md", "LICENSE"]
+
+[lib]
+name = "nafru_email"
+
+[dependencies]
+base64 = "0.23.1"
+getrandom = "0.4.3"
+hmac = "0.13.0"
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
+sha2 = "0.11.1"
+tokio = { version = "1.54.1", features = ["time", "sync"] }
+url = "2.5.8"
+
+[dev-dependencies]
+tokio = { version = "1.54.1", features = ["macros", "rt", "rt-multi-thread", "time", "sync", "net", "io-util"] }

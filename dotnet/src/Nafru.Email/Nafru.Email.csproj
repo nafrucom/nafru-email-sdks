@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>12</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Nafru.Email</RootNamespace>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
+
+    <PackageId>Nafru.Email</PackageId>
+    <Version>0.1.1</Version>
+    <Authors>Nafru</Authors>
+    <Company>Nafru</Company>
+    <Description>Official Nafru Email .NET SDK: send transactional and marketing email from C#/.NET with a Resend-compatible email API. Contacts, broadcasts, templates, webhook verification and "Connect with Nafru" OAuth.</Description>
+    <PackageTags>nafru;email;email-api;transactional-email;smtp-alternative;resend;webhooks;sdk;csharp;dotnet</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/nafrucom/nafru-email</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nafrucom/nafru-email-sdks</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright (c) Nafru</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+    <InternalsVisibleTo Include="Nafru.Email.Tests" />
+  </ItemGroup>
+
+</Project>

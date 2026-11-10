@@ -1,0 +1,31 @@
+# Swift
+.build/
+.swiftpm/
+Package.resolved
+# ruby
+ruby/Gemfile.lock
+ruby/*.gem
+ruby/.bundle/
+ruby/vendor/
+# php
+/vendor/
+/composer.lock
+/.phpunit.cache/
+# python
+python/dist/
+python/.venv/
+python/**/__pycache__/
+python/.pytest_cache/
+python/*.egg-info/
+
+# java
+java/build/
+java/.gradle/
+java/.kotlin/
+# dotnet
+dotnet/**/bin/
+dotnet/**/obj/
+dotnet/**/TestResults/
+dotnet/artifacts/
+# rust
+rust/target/

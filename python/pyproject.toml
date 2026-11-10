@@ -1,0 +1,45 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nafru-email"
+dynamic = ["version"]
+description = "Official Nafru Email Python SDK: send transactional and marketing email from Python with a Resend-compatible email API, contacts, templates, broadcasts and webhook verification."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Nafru" }]
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["nafru", "nafru-email", "email", "email-api", "transactional-email", "send-email", "smtp-alternative", "resend", "webhooks", "sdk", "oauth"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Operating System :: OS Independent",
+  "Typing :: Typed",
+  "Intended Audience :: Developers",
+  "Topic :: Communications :: Email",
+]
+
+[project.urls]
+Homepage = "https://email.nafru.com"
+Documentation = "https://email.nafru.com"
+Repository = "https://github.com/nafrucom/nafru-email-sdks"
+Source = "https://github.com/nafrucom/nafru-email-sdks/tree/main/python"
+Issues = "https://github.com/nafrucom/nafru-email-sdks/issues"
+
+# Single source of the version: SDK_VERSION in src/nafru_email/__init__.py.
+[tool.hatch.version]
+path = "src/nafru_email/__init__.py"
+pattern = "SDK_VERSION = \"(?P<version>[^\"]+)\""
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/nafru_email"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/nafru_email", "tests", "README.md", "LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
